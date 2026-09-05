@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Power Outage - Urja Setu</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="nav-wrap">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">⚡</div>
+        <span>Urja Setu</span>
+      </a>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="objectives.html">Objectives</a>
+        <a href="report.html" class="active">Report Outage</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="reports.html">Reports</a>
+        <a href="team.html">Team</a>
+        <a href="references.html">References</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="container">
+    <div class="text-center">
+      <div class="icon-badge">⚡</div>
+      <h1 class="page-title">Report Power Outage</h1>
+      <p class="page-sub">Help us track electricity issues in your village</p>
+    </div>
+
+    <!-- Form Box -->
+    <div class="form-box">
+      <form action="#" method="post" onsubmit="event.preventDefault(); alert('Report submitted successfully!');">
+        <div class="form-group">
+          <label>Village Name *</label>
+          <input type="text" placeholder="Enter your village name" required>
+        </div>
+
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" required>
+        </div>
+
+        <div class="form-group form-row">
+          <div>
+            <label>Start Time *</label>
+            <input type="time" required>
+          </div>
+          <div>
+            <label>End Time *</label>
+            <input type="time" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Type of Impact *</label>
+          <select required>
+            <option value="" disabled selected>Select impact type</option>
+            <option value="farming">Farming & Irrigation</option>
+            <option value="education">Education & Schooling</option>
+            <option value="healthcare">Healthcare & Clinics</option>
+            <option value="household">Household & Daily Life</option>
+            <option value="business">Small Business</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Description (Optional)</label>
+          <textarea placeholder="Describe how the outage affected your village..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-green" style="width: 100%;">Submit Outage Report</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 Urja Setu. Bridging Power, Empowering Villages.</p>
+  </footer>
+
+</body>
+</html>
