@@ -258,13 +258,14 @@ textarea {
 
 /* Empty States */
 .empty-box {
-  max-width: 500px;
+  max-width: 520px;
   margin: 40px auto;
   background: #ffffff;
-  padding: 40px;
+  padding: 48px 36px;
   text-align: center;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
 }
 .empty-box-wide {
   max-width: 800px;
