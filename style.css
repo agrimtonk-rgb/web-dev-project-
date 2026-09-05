@@ -332,4 +332,5 @@ footer {
   .hero h1 { font-size: 34px; }
   .hero h2 { font-size: 20px; }
   .form-row { flex-direction: column; }
+  .empty-box { padding: 32px 20px; margin: 20px 10px; }
 }

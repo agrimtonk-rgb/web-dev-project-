@@ -26,6 +26,10 @@
     .btn-green:hover { background: #256b45; transform: translateY(-1px); }
     .btn-green:active { transform: translateY(0); }
     footer { background: #fff; border-top: 1px solid #e5e0d8; text-align: center; padding: 20px; font-size: 13px; color: #888; margin-top: auto; }
+    @media (max-width: 600px) {
+      .nav-wrap { flex-direction: column; gap: 10px; }
+      .empty-box { padding: 32px 20px; margin: 20px 10px; }
+    }
   </style>
 </head>
 <body style="min-height: 100vh; display: flex; flex-direction: column;">
