@@ -172,11 +172,19 @@ nav a.active {
   background: #2e7d52;
   color: #ffffff;
   font-weight: 600;
-  padding: 12px 24px;
+  padding: 11px 24px;
   border-radius: 6px;
   display: inline-block;
   border: none;
   cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.btn-green:hover {
+  background: #256b45;
+  transform: translateY(-1px);
+}
+.btn-green:active {
+  transform: translateY(0);
 }
 .btn-white {
   background: #ffffff;
