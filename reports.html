@@ -52,6 +52,22 @@
       <button class="btn-green" style="background: #7da382;" onclick="alert('Report will download after outages are submitted.');">📥 Download PDF</button>
     </div>
 
+      !-- Added Quick-Stat Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+      <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+        <p style="font-size: 13px; color: #666; margin-bottom: 5px;">Total Logged</p>
+        <h3 style="margin: 0; font-size: 24px; color: #333;">0</h3>
+      </div>
+      <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+        <p style="font-size: 13px; color: #666; margin-bottom: 5px;">Active Outages</p>
+        <h3 style="margin: 0; font-size: 24px; color: #333;">0</h3>
+      </div>
+      <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+        <p style="font-size: 13px; color: #666; margin-bottom: 5px;">Avg. Resolution Time</p>
+        <h3 style="margin: 0; font-size: 24px; color: #333;">-- hrs</h3>
+      </div>
+    </div>
+
     <!-- Empty State -->
     <div class="empty-box empty-box-wide">
       <div class="empty-icon">📄</div>
