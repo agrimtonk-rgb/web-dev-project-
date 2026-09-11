@@ -91,6 +91,22 @@
           </select>
         </div>
 
+        !-- Outage Priority / Severity Selector -->
+        <div class="form-group">
+          <label>Outage Priority / Severity *</label>
+          <div style="display: flex; gap: 15px; margin-top: 5px;">
+            <label style="font-weight: normal; cursor: pointer;">
+              <input type="radio" name="priority" value="low" required> Low
+            </label>
+            <label style="font-weight: normal; cursor: pointer;">
+              <input type="radio" name="priority" value="medium" checked> Medium
+            </label>
+            <label style="font-weight: normal; cursor: pointer;">
+              <input type="radio" name="priority" value="high"> High / Emergency
+            </label>
+          </div>
+        </div>
+
         <div class="form-group">
           <label>Description (Optional)</label>
           <textarea placeholder="Describe how the outage affected your village..."></textarea>
