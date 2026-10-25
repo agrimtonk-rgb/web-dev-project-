@@ -1,5 +1,10 @@
-# Ignore temporary OS / editor files
+# Operating System files
 .DS_Store
 Thumbs.db
 
-*.png
+# Dependencies
+node_modules/
+
+# Uploaded evidence files (keep the directory)
+uploads/*
+!uploads/.gitkeep
