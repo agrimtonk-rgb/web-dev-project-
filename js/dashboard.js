@@ -134,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDateChart(reports);
   }
 
-
   /**
    * Populates the recent reports table
    */
