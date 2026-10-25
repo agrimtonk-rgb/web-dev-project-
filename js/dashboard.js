@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Render Canvas Charts
     renderImpactChart(reports);
     renderPriorityChart(reports);
+    renderDateChart(reports);
   }
 
 
@@ -373,6 +374,60 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillText(`(${pct}%)`, 310, legendY);
 
       legendY += 32;
+    });
+  }
+
+  /**
+   * Chart 3: Outages Frequency by Date (Vertical Bar Chart)
+   */
+  function renderDateChart(reports) {
+    const canvas = document.getElementById('dateChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    // Group count by date
+    const dateMap = {};
+    reports.forEach(r => { dateMap[r.outageDate] = (dateMap[r.outageDate] || 0) + 1; });
+
+    const sortedDates = Object.keys(dateMap).sort().slice(-7); // Up to 7 recent dates
+    if (sortedDates.length === 0) return;
+
+    const maxVal = Math.max(...sortedDates.map(d => dateMap[d]), 1);
+    const padBottom = 40;
+    const chartH = height - 30 - padBottom;
+    const step = (width - 60) / sortedDates.length;
+    const barWidth = Math.min(32, step - 10);
+
+    // Baseline
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.beginPath();
+    ctx.moveTo(30, height - padBottom);
+    ctx.lineTo(width - 30, height - padBottom);
+    ctx.stroke();
+
+    sortedDates.forEach((d, i) => {
+      const count = dateMap[d];
+      const barH = Math.round((count / maxVal) * chartH);
+      const x = 30 + i * step + (step - barWidth) / 2;
+      const y = height - padBottom - barH;
+
+      ctx.fillStyle = '#f5a623';
+      ctx.fillRect(x, y, barWidth, barH);
+
+      // Value label on top of bar
+      ctx.fillStyle = '#1f2937';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 11px Segoe UI, sans-serif';
+      ctx.fillText(count.toString(), x + barWidth / 2, y - 6);
+
+      // Date label below bar
+      ctx.font = '11px Segoe UI, sans-serif';
+      ctx.fillStyle = '#6b7280';
+      const shortDate = d.length >= 10 ? d.substring(5) : d;
+      ctx.fillText(shortDate, x + barWidth / 2, height - padBottom + 16);
     });
   }
 
