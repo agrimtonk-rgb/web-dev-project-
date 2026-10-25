@@ -21,6 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const statReportedCount = document.getElementById('statReportedCount');
   const statResolvedCount = document.getElementById('statResolvedCount');
 
+  // Table & Modal Elements
+  const tableBody = document.getElementById('dashboardTableBody');
+  const tableCountBadge = document.getElementById('tableCountBadge');
+  const detailsModal = document.getElementById('detailsModal');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const modalCloseFooterBtn = document.getElementById('modalCloseFooterBtn');
+  const modalBody = document.getElementById('modalBody');
+
   let cachedReports = [];
 
   /**
@@ -50,10 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   async function loadDashboardData() {
     try {
-      if (refreshBtn) {
-        refreshBtn.disabled = true;
-        refreshBtn.textContent = '⏳ Loading...';
-      }
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = '⏳ Loading...';
 
       const response = await fetch('/api/reports');
       if (!response.ok) throw new Error('Server returned an error');
@@ -62,18 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
       renderDashboard(cachedReports);
     } catch (err) {
       console.error('Dashboard load error:', err);
-      if (alertContainer) {
-        alertContainer.innerHTML = `
-          <div class="alert alert-error">
-            ⚠️ Could not load reports. Make sure the server is running at <code>http://localhost:3000</code>.
-          </div>
-        `;
-      }
+      alertContainer.innerHTML = `
+        <div class="alert alert-error">
+          ⚠️ Could not load reports. Make sure the server is running at <code>http://localhost:3000</code>.
+        </div>
+      `;
     } finally {
-      if (refreshBtn) {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = '🔄 Refresh Data';
-      }
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = '🔄 Refresh Data';
     }
   }
 
@@ -81,24 +83,24 @@ document.addEventListener('DOMContentLoaded', () => {
    * Update all dashboard metrics, tables, and charts
    */
   function renderDashboard(reports) {
-    if (alertContainer) alertContainer.innerHTML = '';
+    alertContainer.innerHTML = '';
 
     // If no reports exist, display empty state
     if (!reports || reports.length === 0) {
-      if (statTotalReports) statTotalReports.textContent = '0';
-      if (statTotalHours) statTotalHours.textContent = '0 hrs';
-      if (statAvgDuration) statAvgDuration.textContent = '--';
-      if (statHighPriority) statHighPriority.textContent = '0';
-      if (statReportedCount) statReportedCount.textContent = '0';
-      if (statResolvedCount) statResolvedCount.textContent = '0';
+      statTotalReports.textContent = '0';
+      statTotalHours.textContent = '0 hrs';
+      statAvgDuration.textContent = '--';
+      statHighPriority.textContent = '0';
+      statReportedCount.textContent = '0';
+      statResolvedCount.textContent = '0';
 
-      if (emptyState) emptyState.style.display = 'block';
-      if (dashboardContent) dashboardContent.style.display = 'none';
+      emptyState.style.display = 'block';
+      dashboardContent.style.display = 'none';
       return;
     }
 
-    if (emptyState) emptyState.style.display = 'none';
-    if (dashboardContent) dashboardContent.style.display = 'block';
+    emptyState.style.display = 'none';
+    dashboardContent.style.display = 'block';
 
     // 1. Calculate Summary Numbers in a single loop
     let totalMinutes = 0;
@@ -116,21 +118,142 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalHours = (totalMinutes / 60).toFixed(1);
     const avgMinutes = Math.round(totalMinutes / reports.length);
 
-    if (statTotalReports) statTotalReports.textContent = reports.length;
-    if (statTotalHours) statTotalHours.textContent = `${totalHours} hrs`;
-    if (statAvgDuration) statAvgDuration.textContent = formatMinutes(avgMinutes);
-    if (statHighPriority) statHighPriority.textContent = highCount;
-    if (statReportedCount) statReportedCount.textContent = reportedCount;
-    if (statResolvedCount) statResolvedCount.textContent = resolvedCount;
+    statTotalReports.textContent = reports.length;
+    statTotalHours.textContent = `${totalHours} hrs`;
+    statAvgDuration.textContent = formatMinutes(avgMinutes);
+    statHighPriority.textContent = highCount;
+    statReportedCount.textContent = reportedCount;
+    statResolvedCount.textContent = resolvedCount;
 
-    // 2. Render Canvas Charts
+    // 2. Render Recent Reports Table (Latest 10)
+    renderRecentTable(reports.slice(0, 10), reports.length);
+
+    // 3. Render Canvas Charts
     renderImpactChart(reports);
     renderPriorityChart(reports);
     renderDateChart(reports);
   }
 
   /**
-   * Chart 1: Horizontal Bar Chart - Outages by Impact Category
+   * Populates the recent reports table
+   */
+  function renderRecentTable(recentReports, totalCount) {
+    tableBody.innerHTML = '';
+    tableCountBadge.textContent = `Showing latest ${recentReports.length} of ${totalCount} reports`;
+
+    const impactNames = {
+      farming: 'Farming & Irrigation',
+      education: 'Education',
+      healthcare: 'Healthcare',
+      household: 'Household',
+      business: 'Small Business'
+    };
+
+    recentReports.forEach(r => {
+      const tr = document.createElement('tr');
+      const isResolved = r.status === 'Resolved';
+      const statusBadge = `<span class="badge ${isResolved ? 'badge-status-resolved' : 'badge-status-reported'}">${escapeText(r.status)}</span>`;
+      const priorityClass = r.priority === 'high' ? 'badge-priority-high' : (r.priority === 'low' ? 'badge-priority-low' : 'badge-priority-medium');
+      const priorityBadge = `<span class="badge ${priorityClass}">${escapeText(r.priority)}</span>`;
+      const impactLabel = impactNames[r.impactType] || r.impactType;
+
+      tr.innerHTML = `
+        <td><strong style="color: #2e7d52;" title="${escapeText(r.id)}">${escapeText(r.id.substring(0, 14))}...</strong></td>
+        <td><strong>${escapeText(r.villageName)}</strong></td>
+        <td>${escapeText(r.outageDate)}</td>
+        <td>${formatMinutes(r.durationMinutes)}</td>
+        <td><span class="badge badge-impact">${escapeText(impactLabel)}</span></td>
+        <td>${priorityBadge}</td>
+        <td>${statusBadge}</td>
+        <td>
+          <button class="btn-outline btn-sm view-details-btn" data-id="${escapeText(r.id)}">
+            View Details
+          </button>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+
+    // Attach click listeners to "View Details" buttons
+    tableBody.querySelectorAll('.view-details-btn').forEach(btn => {
+      btn.addEventListener('click', () => openDetailsModal(btn.getAttribute('data-id')));
+    });
+  }
+
+  /**
+   * Opens the report details modal
+   */
+  function openDetailsModal(reportId) {
+    const report = cachedReports.find(r => r.id === reportId);
+    if (!report) return;
+
+    const impactNames = {
+      farming: 'Farming & Irrigation',
+      education: 'Education & Schooling',
+      healthcare: 'Healthcare & Clinics',
+      household: 'Household & Daily Life',
+      business: 'Small Business & Trade'
+    };
+
+    const isResolved = report.status === 'Resolved';
+    const statusBadge = `<span class="badge ${isResolved ? 'badge-status-resolved' : 'badge-status-reported'}">${escapeText(report.status)}</span>`;
+    const priorityClass = report.priority === 'high' ? 'badge-priority-high' : (report.priority === 'low' ? 'badge-priority-low' : 'badge-priority-medium');
+
+    let evidenceHtml = '<p style="color: #888; font-style: italic; font-size: 13.5px;">No photo attached.</p>';
+    if (report.evidenceFile) {
+      evidenceHtml = `
+        <div style="margin-top: 6px;">
+          <a href="${escapeText(report.evidenceFile)}" target="_blank" rel="noopener noreferrer">
+            <img src="${escapeText(report.evidenceFile)}" alt="Evidence" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #ddd;">
+          </a>
+        </div>
+      `;
+    }
+
+    modalBody.innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-item"><span class="detail-label">Report ID</span><span class="detail-value" style="font-family: monospace;">${escapeText(report.id)}</span></div>
+        <div class="detail-item"><span class="detail-label">Status</span><span class="detail-value">${statusBadge}</span></div>
+        <div class="detail-item"><span class="detail-label">Village Name</span><span class="detail-value" style="color: #2e7d52; font-weight: 700;">${escapeText(report.villageName)}</span></div>
+        <div class="detail-item"><span class="detail-label">Contact</span><span class="detail-value">${report.contactNumber ? escapeText(report.contactNumber) : '<em>Not provided</em>'}</span></div>
+        <div class="detail-item"><span class="detail-label">Date</span><span class="detail-value">${escapeText(report.outageDate)}</span></div>
+        <div class="detail-item"><span class="detail-label">Timings</span><span class="detail-value">${escapeText(report.startTime)} – ${escapeText(report.endTime)}</span></div>
+        <div class="detail-item"><span class="detail-label">Duration</span><span class="detail-value">${formatMinutes(report.durationMinutes)} (${report.durationMinutes} mins)</span></div>
+        <div class="detail-item"><span class="detail-label">Priority</span><span class="detail-value"><span class="badge ${priorityClass}">${escapeText(report.priority)}</span></span></div>
+        <div class="detail-item" style="grid-column: 1 / -1;"><span class="detail-label">Impact Sector</span><span class="detail-value">${escapeText(impactNames[report.impactType] || report.impactType)}</span></div>
+      </div>
+      <div style="margin: 14px 0;">
+        <span class="detail-label">Description / Notes</span>
+        <div style="background: #faf8f5; border: 1px solid #e5e0d8; padding: 10px; border-radius: 6px; font-size: 14px; margin-top: 4px;">
+          ${report.description ? escapeText(report.description) : '<em style="color: #888;">No description provided.</em>'}
+        </div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <span class="detail-label">Evidence Photo</span>
+        ${evidenceHtml}
+      </div>
+    `;
+
+    detailsModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetailsModal() {
+    detailsModal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  modalCloseBtn.addEventListener('click', closeDetailsModal);
+  modalCloseFooterBtn.addEventListener('click', closeDetailsModal);
+  detailsModal.addEventListener('click', e => { if (e.target === detailsModal) closeDetailsModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetailsModal(); });
+
+  // ==========================================================================
+  // PURE HTML5 CANVAS CHARTS
+  // ==========================================================================
+
+  /**
+   * Chart 1: Outages by Impact Category (Horizontal Bar Chart)
    */
   function renderImpactChart(reports) {
     const canvas = document.getElementById('impactChart');
@@ -138,63 +261,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-
     ctx.clearRect(0, 0, width, height);
 
-    const counts = { farming: 0, education: 0, healthcare: 0, household: 0, business: 0 };
+    const counts = { Farming: 0, Education: 0, Healthcare: 0, Household: 0, Business: 0 };
     reports.forEach(r => {
-      if (counts[r.impactType] !== undefined) counts[r.impactType]++;
+      if (r.impactType === 'farming') counts.Farming++;
+      else if (r.impactType === 'education') counts.Education++;
+      else if (r.impactType === 'healthcare') counts.Healthcare++;
+      else if (r.impactType === 'household') counts.Household++;
+      else if (r.impactType === 'business') counts.Business++;
     });
 
-    const categories = [
-      { key: 'farming', label: 'Farming', color: '#2e7d52' },
-      { key: 'education', label: 'Education', color: '#3b82f6' },
-      { key: 'healthcare', label: 'Healthcare', color: '#ef4444' },
-      { key: 'household', label: 'Household', color: '#f5a623' },
-      { key: 'business', label: 'Business', color: '#8b5cf6' }
-    ];
+    const categories = Object.keys(counts);
+    const maxVal = Math.max(...Object.values(counts), 1);
+    const startX = 90;
+    const availableWidth = width - startX - 45;
 
-    const maxCount = Math.max(...Object.values(counts), 1);
-    const barHeight = 24;
-    const gap = 16;
-    const startY = 20;
-    const labelWidth = 85;
-    const chartWidth = width - labelWidth - 60;
+    ctx.font = '12px Segoe UI, sans-serif';
 
-    categories.forEach((cat, index) => {
-      const y = startY + index * (barHeight + gap);
-      const count = counts[cat.key];
-      const barW = Math.max((count / maxCount) * chartWidth, 4);
+    categories.forEach((cat, i) => {
+      const y = 25 + i * 36;
+      const val = counts[cat];
+      const barW = Math.round((val / maxVal) * availableWidth);
 
       // Label
-      ctx.fillStyle = '#374151';
-      ctx.font = '12px Inter, sans-serif';
+      ctx.fillStyle = '#4b5563';
       ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(cat.label, labelWidth - 10, y + barHeight / 2);
+      ctx.fillText(cat, startX - 10, y + 16);
 
       // Bar Background
       ctx.fillStyle = '#f3f4f6';
-      ctx.beginPath();
-      ctx.roundRect(labelWidth, y, chartWidth, barHeight, 4);
-      ctx.fill();
+      ctx.fillRect(startX, y, availableWidth, 22);
 
       // Colored Bar
-      ctx.fillStyle = cat.color;
-      ctx.beginPath();
-      ctx.roundRect(labelWidth, y, barW, barHeight, 4);
-      ctx.fill();
+      if (barW > 0) {
+        ctx.fillStyle = '#2e7d52';
+        ctx.fillRect(startX, y, barW, 22);
+      }
 
-      // Count Number
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 12px Inter, sans-serif';
+      // Value number
+      ctx.fillStyle = val > 0 ? '#1f2937' : '#9ca3af';
       ctx.textAlign = 'left';
-      ctx.fillText(`${count}`, labelWidth + barW + 8, y + barHeight / 2);
+      ctx.font = 'bold 12px Segoe UI, sans-serif';
+      ctx.fillText(val.toString(), startX + barW + 8, y + 16);
+      ctx.font = '12px Segoe UI, sans-serif';
     });
   }
 
   /**
-   * Chart 2: Doughnut Chart - Outages by Priority Level
+   * Chart 2: Reports by Priority (Doughnut Chart with Legend)
    */
   function renderPriorityChart(reports) {
     const canvas = document.getElementById('priorityChart');
@@ -202,69 +317,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-
     ctx.clearRect(0, 0, width, height);
 
     const counts = { high: 0, medium: 0, low: 0 };
-    reports.forEach(r => {
-      if (counts[r.priority] !== undefined) counts[r.priority]++;
-    });
+    reports.forEach(r => { if (counts[r.priority] !== undefined) counts[r.priority]++; });
+    const total = reports.length;
 
-    const total = reports.length || 1;
-    const slices = [
-      { label: 'High', count: counts.high, color: '#ef4444' },
-      { label: 'Medium', count: counts.medium, color: '#f5a623' },
-      { label: 'Low', count: counts.low, color: '#10b981' }
-    ];
+    const colors = { high: '#dc2626', medium: '#d97706', low: '#0284c7' };
+    const labels = { high: 'High', medium: 'Medium', low: 'Low' };
 
-    const centerX = width / 2 - 35;
+    const centerX = 110;
     const centerY = height / 2;
-    const radius = 60;
-    const innerRadius = 35;
+    let startAngle = -Math.PI / 2;
 
-    let currentAngle = -0.5 * Math.PI;
-
-    slices.forEach(slice => {
-      const sliceAngle = (slice.count / total) * (2 * Math.PI);
-      if (slice.count > 0) {
-        ctx.fillStyle = slice.color;
+    ['high', 'medium', 'low'].forEach(key => {
+      const slice = (counts[key] / total) * (Math.PI * 2);
+      if (slice > 0) {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
-        ctx.arc(centerX, centerY, innerRadius, currentAngle + sliceAngle, currentAngle, true);
+        ctx.arc(centerX, centerY, 75, startAngle, startAngle + slice);
+        ctx.arc(centerX, centerY, 45, startAngle + slice, startAngle, true);
         ctx.closePath();
+        ctx.fillStyle = colors[key];
         ctx.fill();
+        startAngle += slice;
       }
-      currentAngle += sliceAngle;
     });
 
-    // Center total text
-    ctx.fillStyle = '#111827';
-    ctx.font = 'bold 16px Inter, sans-serif';
+    // Center total label
+    ctx.fillStyle = '#1f2937';
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${reports.length}`, centerX, centerY - 2);
+    ctx.font = 'bold 18px Segoe UI, sans-serif';
+    ctx.fillText(total.toString(), centerX, centerY + 3);
+    ctx.font = '11px Segoe UI, sans-serif';
     ctx.fillStyle = '#6b7280';
-    ctx.font = '10px Inter, sans-serif';
-    ctx.fillText('Reports', centerX, centerY + 14);
+    ctx.fillText('Reports', centerX, centerY + 18);
 
-    // Legend
-    const legendX = width - 85;
-    slices.forEach((s, idx) => {
-      const ly = 55 + idx * 28;
-      ctx.fillStyle = s.color;
-      ctx.fillRect(legendX, ly - 5, 10, 10);
+    // Legend on the right
+    let legendY = 65;
+    ['high', 'medium', 'low'].forEach(key => {
+      const count = counts[key];
+      const pct = Math.round((count / total) * 100);
 
-      ctx.fillStyle = '#374151';
-      ctx.font = '12px Inter, sans-serif';
+      ctx.fillStyle = colors[key];
+      ctx.beginPath();
+      ctx.arc(220, legendY - 4, 6, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      const pct = Math.round((s.count / total) * 100);
-      ctx.fillText(`${s.label}: ${s.count} (${pct}%)`, legendX + 16, ly);
+      ctx.font = '600 13px Segoe UI, sans-serif';
+      ctx.fillStyle = '#374151';
+      ctx.fillText(`${labels[key]}: ${count}`, 234, legendY);
+
+      ctx.font = '12px Segoe UI, sans-serif';
+      ctx.fillStyle = '#6b7280';
+      ctx.fillText(`(${pct}%)`, 310, legendY);
+
+      legendY += 32;
     });
   }
 
   /**
-   * Chart 3: Timeline Bar Chart - Outage Frequency by Date
+   * Chart 3: Outages Frequency by Date (Vertical Bar Chart)
    */
   function renderDateChart(reports) {
     const canvas = document.getElementById('dateChart');
@@ -272,52 +385,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-
     ctx.clearRect(0, 0, width, height);
 
-    // Group reports by date
+    // Group count by date
     const dateMap = {};
-    reports.forEach(r => {
-      dateMap[r.outageDate] = (dateMap[r.outageDate] || 0) + 1;
-    });
+    reports.forEach(r => { dateMap[r.outageDate] = (dateMap[r.outageDate] || 0) + 1; });
 
-    // Take recent dates sorted ascending
-    const sortedDates = Object.keys(dateMap).sort().slice(-7);
+    const sortedDates = Object.keys(dateMap).sort().slice(-7); // Up to 7 recent dates
     if (sortedDates.length === 0) return;
 
-    const maxCount = Math.max(...sortedDates.map(d => dateMap[d]), 1);
-    const bottomPadding = 30;
-    const topPadding = 20;
-    const chartHeight = height - bottomPadding - topPadding;
-    const barWidth = Math.min(36, (width - 40) / (sortedDates.length * 1.6));
-    const step = (width - 40) / sortedDates.length;
+    const maxVal = Math.max(...sortedDates.map(d => dateMap[d]), 1);
+    const padBottom = 40;
+    const chartH = height - 30 - padBottom;
+    const step = (width - 60) / sortedDates.length;
+    const barWidth = Math.min(32, step - 10);
 
-    sortedDates.forEach((date, i) => {
-      const count = dateMap[date];
-      const barH = (count / maxCount) * chartHeight;
+    // Baseline
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.beginPath();
+    ctx.moveTo(30, height - padBottom);
+    ctx.lineTo(width - 30, height - padBottom);
+    ctx.stroke();
+
+    sortedDates.forEach((d, i) => {
+      const count = dateMap[d];
+      const barH = Math.round((count / maxVal) * chartH);
       const x = 30 + i * step + (step - barWidth) / 2;
-      const y = height - bottomPadding - barH;
+      const y = height - padBottom - barH;
 
-      // Bar
-      ctx.fillStyle = '#2e7d52';
-      ctx.beginPath();
-      ctx.roundRect(x, y, barWidth, barH, [4, 4, 0, 0]);
-      ctx.fill();
+      ctx.fillStyle = '#f5a623';
+      ctx.fillRect(x, y, barWidth, barH);
 
-      // Count above bar
-      ctx.fillStyle = '#111827';
-      ctx.font = 'bold 11px Inter, sans-serif';
+      // Value label on top of bar
+      ctx.fillStyle = '#1f2937';
       ctx.textAlign = 'center';
-      ctx.fillText(`${count}`, x + barWidth / 2, y - 6);
+      ctx.font = 'bold 11px Segoe UI, sans-serif';
+      ctx.fillText(count.toString(), x + barWidth / 2, y - 6);
 
-      // Date label below
+      // Date label below bar
+      ctx.font = '11px Segoe UI, sans-serif';
       ctx.fillStyle = '#6b7280';
-      ctx.font = '10px Inter, sans-serif';
-      const shortDate = date.substring(5); // MM-DD
-      ctx.fillText(shortDate, x + barWidth / 2, height - 10);
+      const shortDate = d.length >= 10 ? d.substring(5) : d;
+      ctx.fillText(shortDate, x + barWidth / 2, height - padBottom + 16);
     });
   }
 
-  if (refreshBtn) refreshBtn.addEventListener('click', loadDashboardData);
+  refreshBtn.addEventListener('click', loadDashboardData);
   loadDashboardData();
 });
