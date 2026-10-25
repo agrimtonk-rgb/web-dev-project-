@@ -127,6 +127,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Render Recent Reports Table (Latest 10)
     renderRecentTable(reports.slice(0, 10), reports.length);
+
+    // 3. Render Canvas Charts
+    renderImpactChart(reports);
+    renderPriorityChart(reports);
   }
 
 
@@ -244,6 +248,133 @@ document.addEventListener('DOMContentLoaded', () => {
   detailsModal.addEventListener('click', e => { if (e.target === detailsModal) closeDetailsModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetailsModal(); });
 
+  // ==========================================================================
+  // PURE HTML5 CANVAS CHARTS
+  // ==========================================================================
+
+  /**
+   * Chart 1: Outages by Impact Category (Horizontal Bar Chart)
+   */
+  function renderImpactChart(reports) {
+    const canvas = document.getElementById('impactChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const counts = { Farming: 0, Education: 0, Healthcare: 0, Household: 0, Business: 0 };
+    reports.forEach(r => {
+      if (r.impactType === 'farming') counts.Farming++;
+      else if (r.impactType === 'education') counts.Education++;
+      else if (r.impactType === 'healthcare') counts.Healthcare++;
+      else if (r.impactType === 'household') counts.Household++;
+      else if (r.impactType === 'business') counts.Business++;
+    });
+
+    const categories = Object.keys(counts);
+    const maxVal = Math.max(...Object.values(counts), 1);
+    const startX = 90;
+    const availableWidth = width - startX - 45;
+
+    ctx.font = '12px Segoe UI, sans-serif';
+
+    categories.forEach((cat, i) => {
+      const y = 25 + i * 36;
+      const val = counts[cat];
+      const barW = Math.round((val / maxVal) * availableWidth);
+
+      // Label
+      ctx.fillStyle = '#4b5563';
+      ctx.textAlign = 'right';
+      ctx.fillText(cat, startX - 10, y + 16);
+
+      // Bar Background
+      ctx.fillStyle = '#f3f4f6';
+      ctx.fillRect(startX, y, availableWidth, 22);
+
+      // Colored Bar
+      if (barW > 0) {
+        ctx.fillStyle = '#2e7d52';
+        ctx.fillRect(startX, y, barW, 22);
+      }
+
+      // Value number
+      ctx.fillStyle = val > 0 ? '#1f2937' : '#9ca3af';
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 12px Segoe UI, sans-serif';
+      ctx.fillText(val.toString(), startX + barW + 8, y + 16);
+      ctx.font = '12px Segoe UI, sans-serif';
+    });
+  }
+
+  /**
+   * Chart 2: Reports by Priority (Doughnut Chart with Legend)
+   */
+  function renderPriorityChart(reports) {
+    const canvas = document.getElementById('priorityChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const counts = { high: 0, medium: 0, low: 0 };
+    reports.forEach(r => { if (counts[r.priority] !== undefined) counts[r.priority]++; });
+    const total = reports.length;
+
+    const colors = { high: '#dc2626', medium: '#d97706', low: '#0284c7' };
+    const labels = { high: 'High', medium: 'Medium', low: 'Low' };
+
+    const centerX = 110;
+    const centerY = height / 2;
+    let startAngle = -Math.PI / 2;
+
+    ['high', 'medium', 'low'].forEach(key => {
+      const slice = (counts[key] / total) * (Math.PI * 2);
+      if (slice > 0) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 75, startAngle, startAngle + slice);
+        ctx.arc(centerX, centerY, 45, startAngle + slice, startAngle, true);
+        ctx.closePath();
+        ctx.fillStyle = colors[key];
+        ctx.fill();
+        startAngle += slice;
+      }
+    });
+
+    // Center total label
+    ctx.fillStyle = '#1f2937';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 18px Segoe UI, sans-serif';
+    ctx.fillText(total.toString(), centerX, centerY + 3);
+    ctx.font = '11px Segoe UI, sans-serif';
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText('Reports', centerX, centerY + 18);
+
+    // Legend on the right
+    let legendY = 65;
+    ['high', 'medium', 'low'].forEach(key => {
+      const count = counts[key];
+      const pct = Math.round((count / total) * 100);
+
+      ctx.fillStyle = colors[key];
+      ctx.beginPath();
+      ctx.arc(220, legendY - 4, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.textAlign = 'left';
+      ctx.font = '600 13px Segoe UI, sans-serif';
+      ctx.fillStyle = '#374151';
+      ctx.fillText(`${labels[key]}: ${count}`, 234, legendY);
+
+      ctx.font = '12px Segoe UI, sans-serif';
+      ctx.fillStyle = '#6b7280';
+      ctx.fillText(`(${pct}%)`, 310, legendY);
+
+      legendY += 32;
+    });
+  }
 
   refreshBtn.addEventListener('click', loadDashboardData);
   loadDashboardData();
