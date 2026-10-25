@@ -51,3 +51,49 @@ Urja Setu provides a simple, accessible website where villagers and local leader
   - **Multer**: Middleware for handling optional image evidence uploads.
 - **Data Storage**:
   - **Local JSON File (`data/reports.json`)**: Thread-safe atomic file writing with automatic recovery. No external database installations (MongoDB, MySQL, Firebase) required.
+
+---
+
+## 4. Project Folder Structure
+
+```text
+web-dev-project--main/
+│
+├── index.html           # Homepage introducing the project & 4-step workflow
+├── about.html           # Project background, purpose, and prototype scope
+├── objectives.html      # 6 key objectives of Urja Setu
+├── report.html          # Outage reporting form with validation
+├── dashboard.html       # Analytics dashboard with canvas charts & recent table
+├── reports.html         # Full report database with search, filters, & exports
+├── team.html            # Team members, responsibilities, and roles
+├── references.html      # Academic publications, government links, & sources
+├── style.css            # Unified responsive stylesheet
+│
+├── server.js            # Express backend server and REST API endpoints
+├── package.json         # Project metadata and dependencies
+│
+├── js/
+│   ├── report.js        # Form validation, live duration calculation, & submission
+│   ├── dashboard.js     # Dashboard data fetching, stats, charts, & details modal
+│   └── reports.js       # Reports table rendering, filtering, status toggle, & CSV export
+│
+├── data/
+│   └── reports.json     # Persistent JSON storage for all outage records
+│
+├── uploads/
+│   └── .gitkeep         # Storage folder for uploaded photo evidence
+│
+└── assets/
+    └── hero-bg.jpg      # Background image for the homepage hero section
+```
+
+---
+
+## 5. How the Website Works
+
+Urja Setu follows a straightforward 4-step architecture:
+
+1. **Step 1 — Submit Report**: A user visits `report.html` and enters their village name, outage date, start and end times, affected sector (farming, education, healthcare, household, business), and priority.
+2. **Step 2 — Validate & Save**: The browser checks the inputs and sends the form to the Express server (`POST /api/reports`). The server validates the payload, calculates the outage duration (handling overnight cuts), generates a unique ID (e.g. `URJA-MVO...`), and saves the report into `data/reports.json`.
+3. **Step 3 — Dynamic Analytics**: The Dashboard (`dashboard.html`) fetches all saved records from `GET /api/reports` and calculates total lost hours, average outage duration, and renders visual sector charts.
+4. **Step 4 — Analyze & Export**: The Reports page (`reports.html`) displays the complete dataset with live search, filtering, status tracking (Reported ↔ Resolved), CSV download, and printable summaries.
