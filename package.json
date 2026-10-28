@@ -1,0 +1,23 @@
+{
+  "name": "urja-setu",
+  "version": "1.0.0",
+  "description": "Urja Setu - Bridging Power, Empowering Villages. A rural electricity outage reporting and analytics platform.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "urja-setu",
+    "electricity-outage",
+    "rural-development",
+    "express",
+    "vanilla-js"
+  ],
+  "author": "Urja Setu Team",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
